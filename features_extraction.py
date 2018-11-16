@@ -88,6 +88,135 @@ def having_sub_domain(url):
     else:
         return -1
 
+
+# def sslfinal_state(url):
+#     hostname = url
+#     h = [(x.start(0), x.end(0)) for x in re.finditer('https://|http://', hostname)]
+#     z = int(len(h))
+#     if z != 0:
+#         y = h[0][1]
+#         if y == 7:
+#             https = 0
+#         else:
+#             https = 1
+#         host = "www."
+#         hostname = hostname[y:]
+#         hostname = host + hostname
+#         #print hostname
+#         h = [(x.start(0), x.end(0)) for x in re.finditer('/', hostname)]
+#         z = int(len(h))
+#         if z != 0:
+#             hostname = hostname[:h[0][0]]
+#     else:
+#         https = 0
+#     try:
+#         cert = ssl.get_server_certificate((hostname, 443))
+#     except:
+#         return -1
+#     x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
+#     i = x509.get_issuer()
+#     before = x509.get_notBefore()
+#     after = x509.get_notAfter()
+#
+#     issuer = str(i)
+#     notBefore = str(before)
+#     notAfter = str(after)
+#     print notBefore
+#     print notAfter
+#
+#     r = issuer.split("'")
+#     r = r[1]
+#     ca = r.split("CN=")
+#     certificate_authority = ca[1]
+#     print certificate_authority
+#
+#     h = [x.start(0) for x in re.finditer(
+#         'Comodo|Symantec|GoDaddy|GlobalSign|IdenTrust|DigiCert|StartCom|Entrust|Trustwave|Verizon|Secom|Unizeto|QuoVadis|Deutsche Telekom|Network Solutions|TWCA|VeriSign|GeoTrust|Thawte|Doster|Google',
+#         certificate_authority)]
+#     z = int((len(h)))
+#     if z != 0:
+#         check = 1
+#     else:
+#         check = 0
+#     notBefore = notBefore[:4]
+#     notAfter = notAfter[:4]
+#     if (int(notAfter) - int(notBefore) >= 1 and check == 1 and https == 1):
+#         return 1
+#     elif https == 1:
+#         return 0
+#     else:
+#         return -1
+
+def domain_registration_length(domain):
+    expiration_date = domain.expiration_date
+    today = time.strftime('%Y-%m-%d')
+    today = datetime.strptime(today, '%Y-%m-%d')
+    registration_length = abs((expiration_date - today).days)
+
+    if registration_length / 365 <= 1:
+        return -1
+    else:
+        return 1
+
+def favicon(wiki, soup, domain):
+    for head in soup.find_all('head'):
+        for head.link in soup.find_all('link', href=True):
+            dots = [x.start(0) for x in re.finditer('\.', head.link['href'])]
+            if wiki in head.link['href'] or len(dots) == 1 or domain in head.link['href']:
+                return 1
+            else:
+                return -1
+    return 1
+
+def https_token(url):
+    match=re.search('https://|http://',url)
+    if match.start(0)==0:
+        url=url[match.end(0):]
+    match=re.search('http|https',url)
+    if match:
+        return -1
+    else:
+        return 1
+
+def request_url(wiki, soup, domain):
+   i = 0
+   success = 0
+   for img in soup.find_all('img', src= True):
+      dots= [x.start(0) for x in re.finditer('\.', img['src'])]
+      if wiki in img['src'] or domain in img['src'] or len(dots)==1:
+         success = success + 1
+      i=i+1
+
+   for audio in soup.find_all('audio', src= True):
+      dots = [x.start(0) for x in re.finditer('\.', audio['src'])]
+      if wiki in audio['src'] or domain in audio['src'] or len(dots)==1:
+         success = success + 1
+      i=i+1
+
+   for embed in soup.find_all('embed', src= True):
+      dots=[x.start(0) for x in re.finditer('\.',embed['src'])]
+      if wiki in embed['src'] or domain in embed['src'] or len(dots)==1:
+         success = success + 1
+      i=i+1
+
+   for iframe in soup.find_all('iframe', src= True):
+      dots=[x.start(0) for x in re.finditer('\.',iframe['src'])]
+      if wiki in iframe['src'] or domain in iframe['src'] or len(dots)==1:
+         success = success + 1
+      i=i+1
+
+   try:
+      percentage = success/float(i) * 100
+   except:
+       return 1
+
+   if percentage < 22.0 :
+      return 1
+   elif((percentage >= 22.0) and (percentage < 61.0)) :
+      return 0
+   else :
+      return -1
+
 def url_of_anchor(wiki, soup, domain):
     i = 0
     unsafe=0
